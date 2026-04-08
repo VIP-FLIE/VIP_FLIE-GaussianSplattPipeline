@@ -21,7 +21,7 @@ class ExampleSection(PipelineSection):
         self._add_checkbox(parent, "Force Error?", "should_fail", default_val=False)
         self._add_float_spinbox(parent, "Float Test:", "test_float", 0.0, 10.0, 0.5, 5.0)
 
-    def build_command(self) -> List[str]:
+    def build_command(self, settings: dict) -> List[str]:
         # Read values from config
         cfg = self.config.get_section_config(self.name)
         duration = cfg.get("duration", "2")

@@ -20,13 +20,13 @@ from sections.blur_section import BlurSection
 from sections.extract_frames_section import ExtractFramesSection
 from sections.deduplicate_section import DeduplicateSection
 from sections.metashape_section import MetashapeSection
+from sections.brush_section import BrushSection
 
 def main():
     output_queue = queue.Queue()
     config = PipelineConfiguration()
     executor = AsyncExecutor(output_queue)
     manager = PipelineManager(config, executor)
-    
     # --- Define Categories & Sections ---
     
     # 1. Frame Extraction
@@ -37,8 +37,7 @@ def main():
     # 2. Preprocessing (Multi-Select allowed)
     cat_prep = PipelineCategory("Preprocessing", SelectionMode.MULTI, stage_index=2)
     cat_prep.add_section(BlurSection("Blur Filter", config))
-    #TODO: Ensure this is prperly implemented and test this
-    #cat_prep.add_section(DeduplicateSection("Deduplicate Frames", config))
+    cat_prep.add_section(DeduplicateSection("Deduplicate Frames", config))
     manager.add_category(cat_prep)
     
     # 3. SfM (Single Select implied)
@@ -47,14 +46,14 @@ def main():
     #cat_sfm.add_section(ExampleSection("COLMAP", config))
     #TODO: ImplementTest Glomap
     #cat_sfm.add_section(ExampleSection("GLOMAP (Global)", config))
-    #TODO: Finish Implementint and Test Metashape option 
+    #TODO: Test Metashape option 
     cat_sfm.add_section(MetashapeSection("Metashape (Colmap Output)", config))
     manager.add_category(cat_sfm)
     
     # 4. Training
     cat_train = PipelineCategory("Training", SelectionMode.SINGLE, stage_index=4)
     #TODO: Implement Brush Support
-    #cat_train.add_section(ExampleSection("Standard 3DGS", config))
+    cat_train.add_section(BrushSection("Brush", config))
     manager.add_category(cat_train)
     
     # --- Launch ---

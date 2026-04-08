@@ -1,3 +1,4 @@
+import io
 import subprocess
 import threading
 import queue
@@ -63,13 +64,13 @@ class AsyncExecutor:
             )
 
             # Read output line by line
-            for line in iter(self.process.stdout.readline, ''):
+            for line in iter(self.process.stdout.readline, ''): # type: ignore
                 if self._stop_event.is_set():
                     break
                 if line:
                     self.output_queue.put(line)
             
-            self.process.stdout.close()
+            self.process.stdout.close()  # type: ignore
             return_code = self.process.wait()
             
             self.is_running = False

@@ -1,9 +1,8 @@
 import tkinter as tk
-from tkinter import ttk
-from typing import Callable, Optional
+from typing import Callable
 from core.pipeline_manager import PipelineManager
-from core.category import SelectionMode
-from .style import bgColor, sectionColor, normalTextColor, sectionBorderColor, debug
+from sections.base_section import PipelineSection
+from .style import bgColor, normalTextColor
 
 class LibraryWidget(tk.Frame):
     """
@@ -11,11 +10,12 @@ class LibraryWidget(tk.Frame):
     Displays categories and their sections.
     Handles 'Selection' (viewing options) and 'Staging' (adding to pipeline).
     """
-    def __init__(self, parent, manager: PipelineManager, on_view_section: Callable):
+    def __init__(self, parent, manager: PipelineManager, on_view_section: Callable, settings: dict):
         super().__init__(parent)
         self.manager = manager
         self.on_view_section = on_view_section # Callback when user clicks name to view options
         self.configure(border=0, width=200, background=bgColor)
+        self.settings = settings
         self._setup_ui()
         # Listen for updates
         self.manager.add_staging_listener(self._refresh_toggles)
@@ -47,35 +47,44 @@ class LibraryWidget(tk.Frame):
             """
             Sets up the category titles
             """
-            category_text = str(category_count) + ". " + category.name
-            category_count += 1
-            # Header
-            cat_frame = tk.Frame(self.scrollable_frame, background='darkgray', pady=2, width=100)
-            cat_frame.pack(fill='x', pady=2)
-            tk.Label(cat_frame, text=category_text, background='darkgray', font=('Helvetica', 10, 'bold')).pack(anchor='w', ipadx=5, padx=0)
-            
-            # Items
+            toggledSections = []
             for section in category.sections:
-                """
-                Sets up the individual options in each category
-                """
-                row = tk.Frame(self.scrollable_frame, background=bgColor)
-                row.pack(anchor='w', padx=(10,0), pady=1)
+                if (not section.settings_key) or (self.settings["settings"][section.settings_key]["enabled"]):
+                        toggledSections.append(section)
+                    
+                    
+                        
+            if len(toggledSections):
+                category_text = str(category_count) + ". " + category.name
+                category_count += 1
+                # Header
+                cat_frame = tk.Frame(self.scrollable_frame, background='darkgray', pady=2, width=100)
+                cat_frame.pack(fill='x', pady=2)
+                tk.Label(cat_frame, text=category_text, background='darkgray', font=('Helvetica', 10, 'bold')).pack(anchor='w', ipadx=5, padx=0)
                 
-                # Checkbox for Staging
-                var = tk.BooleanVar(value=False)
-                self.toggle_vars[section.name] = var
-                
-                # We need to capture 'section' in lambda properly
-                cmd = lambda s=section, v=var: self._on_toggle(s, v)
-                
-                chk = tk.Checkbutton(row, variable=var, command=cmd, background=bgColor, highlightthickness=0, foreground=normalTextColor,activebackground=bgColor, activeforeground=normalTextColor, selectcolor=bgColor)
-                chk.pack(side='left')
-                
-                # Clickable Label for Viewing
-                lbl = tk.Label(row, text=section.name, background=bgColor, foreground=normalTextColor, cursor="hand2")
-                lbl.pack(side='left', fill='x', expand=True, anchor='w')
-                lbl.bind("<Button-1>", lambda e, s=section: self.on_view_section(s))
+                # Items
+                for section in toggledSections:
+                    """
+                    Sets up the individual options in each category
+                    """
+                    
+                    row = tk.Frame(self.scrollable_frame, background=bgColor)
+                    row.pack(anchor='w', padx=(10,0), pady=1)
+                    
+                    # Checkbox for Staging
+                    var = tk.BooleanVar(value=False)
+                    self.toggle_vars[section.name] = var
+                    
+                    # We need to capture 'section' in lambda properly
+                    cmd = lambda s=section, v=var: self._on_toggle(s, v)
+                    
+                    chk = tk.Checkbutton(row, variable=var, command=cmd, background=bgColor, highlightthickness=0, foreground=normalTextColor,activebackground=bgColor, activeforeground=normalTextColor, selectcolor=bgColor)
+                    chk.pack(side='left')
+                    
+                    # Clickable Label for Viewing
+                    lbl = tk.Label(row, text=section.name, background=bgColor, foreground=normalTextColor, cursor="hand2")
+                    lbl.pack(side='left', fill='x', expand=True, anchor='w')
+                    lbl.bind("<Button-1>", lambda e, s=section: self.on_view_section(s))
         
         
         self.scrollbar = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview, bd=0, background=bgColor, activerelief='flat')

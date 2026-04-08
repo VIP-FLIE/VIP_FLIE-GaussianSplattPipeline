@@ -1,3 +1,4 @@
+from pathlib import Path
 import sys
 import os
 from typing import List, Dict, Any
@@ -16,7 +17,7 @@ class BlurCommandBuilder:
         # base_dir is now the project root
         script_path = os.path.join(base_dir, "scripts", "blur_filter.py")
         
-        cmd = [sys.executable, script_path]
+        cmd = [ sys.executable, script_path]
         
         # injected paths
         if "input_dir" in config:
@@ -126,7 +127,7 @@ class ExtractFramesCommandBuilder:
         # base_dir is project root
         script_path = os.path.join(base_dir, "scripts", "extract_frames.py")
         
-        cmd = [sys.executable, script_path]
+        cmd = [ sys.executable, script_path]
         
         # Mandatory Arguments
         if "input_dir" in config:
@@ -157,7 +158,7 @@ class ExtractFramesCommandBuilder:
 
 class MetashapeCommandBuilder:
     @staticmethod
-    def build(config: Dict[str, Any]) -> List[str]:
+    def build(config: Dict[str, Any], settings:dict) -> List[str]:
         """
         Builds the command line arguments for the Metashape script.
         """
@@ -168,19 +169,57 @@ class MetashapeCommandBuilder:
         cmd = [sys.executable, script_path]
         
         # Mandatory Arguments (configs not defined in section)
+        
+        cmd.extend(["--executable", settings["settings"]["metashape"]["path"]])
+
         if "input_dir" in config:
-            cmd.extend(["--input", str(config["input_dir"])])
+            cmd.extend(["--input", '"'+str(config["input_dir"])+'"'])
             
         if "output_dir" in config:
-            cmd.extend(["--output", str(config["output_dir"])])
+            cmd.extend(["--output", '"'+str(config["output_dir"])+'"'])
         
         # Mandatory Arguments (Configs defined in Metashape section)
-        if "name" in config:
-            cmd.extend(["--name", str(config["name"])])
-        
-        if ("metashape_output" in config) and ("separateDirFlag" in config):
-            cmd.extend({"--metashape_output", str(config["metashape_output"])})        
+        if "metashape_name" in config:
+            cmd.extend(["--name", '"'+str(config["metashape_name"])+'"'])
+
+        if ("metashape_output" in config) and (config["separateDirFlag"]):
+            cmd.extend(["--metashape_output", '"'+str(config["metashape_output"])+'"'])        
         else:
-            cmd.extend({"--metashape_output", str(config["output_dir"])})
+            cmd.extend(["--metashape_output", '"'+str(config["output_dir"]) +'"'])
+        print(cmd)
+        return cmd
+    
+class BrushCommandBuilder:
+    @staticmethod
+    def build(config: Dict[str, Any], settings:dict) -> List[str]:
+        """
+        Builds the command line arguments for Brush
+        """
+        brush_exe = settings["settings"]["brush"]["path"]
         
+        cmd = [brush_exe]
+            
+        if "output_dir" in config:
+            cmd.extend(["--export-path", str(Path(config["output_dir"]).absolute())])
+
+        if "brush_name" in config:
+            cmd.extend(["--export-name", str(config["brush_name"])])
+        
+        if config["brush_GUI_Flag"]:
+            cmd.extend(["--with-viewer"])  
+        
+        if "brush_steps" in config:
+            cmd.extend(["--total-steps", str(config["brush_steps"])])
+
+        if "brush_splats" in config:
+            cmd.extend(["--max-splats", str(config["brush_splats"])])
+
+        if "brush_SH" in config:
+            cmd.extend(["--sh-degree", str(config["brush_SH"])])    
+
+        if "input_dir" in config:
+            cmd.extend([str(Path(config["input_dir"]).absolute())])
+
+        print(cmd)
+
         return cmd

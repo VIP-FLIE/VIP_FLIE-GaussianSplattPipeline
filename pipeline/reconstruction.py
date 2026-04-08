@@ -78,7 +78,6 @@ class BaseReconstruction(ABC):
     self.perform_mapping()
     pass
 
-
 class COLMAP_Mapper(BaseReconstruction):
     '''
     runs the COLMAP mapping portion

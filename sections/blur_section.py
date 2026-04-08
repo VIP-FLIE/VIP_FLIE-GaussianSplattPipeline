@@ -23,7 +23,7 @@ class BlurSection(PipelineSection):
 
         self._add_checkbox(parent, "Dry Run (Simulate)", "dry_run", default_val=False)
 
-    def build_command(self) -> List[str]:
+    def build_command(self, settings: dict) -> List[str]:
         # Delegate command building to the specialized builder
         # ensuring we pass the section config (which includes the injected paths)
         from core.command_builders import BlurCommandBuilder

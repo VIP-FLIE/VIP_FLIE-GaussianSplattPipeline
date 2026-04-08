@@ -1,4 +1,3 @@
-#TODO: Fix bug where path selection window soft locks if closed before the file dialog is closed
 import tkinter as tk
 from tkinter import filedialog, ttk
 import os
@@ -86,9 +85,6 @@ class PathSelectionWindow(tk.Toplevel):
         
         self.tree.pack(side='left', fill='both', expand=True)
         scrollbar.pack(side='right', fill='y')
-        
-        
-
 
     def _refresh_ui_from_config(self):
         ctx = self.config.global_context
@@ -99,12 +95,21 @@ class PathSelectionWindow(tk.Toplevel):
 
     def _select_input(self):
         path = filedialog.askdirectory(title="Select Input Directory")
-        self.lift()
+        try:
+            self.lift()
+        except:
+            pass
         if path:
             self.config.global_context.input_dir = path
-            self._refresh_ui_from_config()
-            if self.on_update: self.on_update()
-        self.lift()
+            try:self._refresh_ui_from_config()
+            except:pass
+            try:
+                if self.on_update: self.on_update()
+            except:pass
+        try:
+            self.lift()
+        except:
+            pass
 
     def _clear_input(self):
         self.config.global_context.input_dir = ""
@@ -113,12 +118,21 @@ class PathSelectionWindow(tk.Toplevel):
 
     def _select_output(self):
         path = filedialog.askdirectory(title="Select Output Directory")
-        self.lift()
+        try:
+            self.lift()
+        except:
+            pass
         if path:
             self.config.global_context.output_dir = path
-            self._refresh_ui_from_config()
-            if self.on_update: self.on_update()
-        
+            try:self._refresh_ui_from_config()
+            except:pass
+            try:
+                if(self.on_update): self.on_update()
+            except:pass
+        try:
+            self.lift()
+        except:
+            pass     
 
     def _clear_output(self):
         self.config.global_context.output_dir = ""

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import tkinter as tk
+from tkinter import Misc, filedialog
 from typing import List, Any, Dict, Optional
 from core.state_models import PipelineConfiguration
 from gui.style import bgColor, normalTextColor
@@ -9,10 +10,10 @@ class PipelineSection(ABC):
     Abstract Base Class for a single step in the pipeline.
     Enforces the interface for Rendering Options and Building Commands.
     """
-    def __init__(self, name: str, config: PipelineConfiguration):
+    def __init__(self, name: str, config: PipelineConfiguration, settings_key: None | str = None):
         self.name = name
         self.config = config
-        
+        self.settings_key = settings_key
         # Internal storage for widgets so we can read them later
         # Key = Config Key, Value = Tkinter Variable (StringVar, IntVar, etc.)
         self.widget_vars: Dict[str, tk.Variable] = {}
@@ -41,7 +42,7 @@ class PipelineSection(ABC):
         self.config.update_section_config(self.name, "output_dir", output_path)
 
     @abstractmethod
-    def build_command(self) -> List[str]:
+    def build_command(self, settings: dict) -> List[str]:
         """
         Constructs the strict command line arguments string list.
         e.g., ['python', 'script.py', '--input', '...']
@@ -115,7 +116,7 @@ class PipelineSection(ABC):
         chk = tk.Checkbutton(frame, variable=var, bg=bgColor, fg=normalTextColor,justify="center",activebackground=bgColor, activeforeground=normalTextColor, selectcolor=bgColor)
         chk.pack(side='right') # Offset to align somewhat with entries
 
-    def _add_dropdown(self, parent: tk.Frame, label_text: str, config_key: str, options: List[str], default_val: str, width: [int, None] = 10):
+    def _add_dropdown(self, parent: tk.Frame, label_text: str, config_key: str, options: List[str], default_val: str, width: int | None = 10):
         """
         Helper to create a Dropdown (OptionMenu).
         Example:
@@ -225,13 +226,30 @@ class PipelineSection(ABC):
         Helper to create a file selector box.
         Example:
                             ┌────────────┐
-        Important file        │ Select file │
+        Important file      │Select file │
                             └────────────┘  
         """
+        topFrame = tk.Frame(parent, padx=0, pady=0, background=bgColor)
+        topFrame.pack(fill='x', pady=2)
         
-        frame = tk.Frame(parent, bg=bgColor)
-        frame.pack(fill='x', pady=2)
+        frame1 = tk.Frame(topFrame, bg=bgColor)
+        frame1.pack(fill='x', expand=True, anchor='n')
         
-        lbl = tk.Label(frame, text=label_text, anchor='w', bg=bgColor, fg=normalTextColor)
+        lbl = tk.Label(frame1, text=label_text, anchor='w', bg=bgColor, fg=normalTextColor)
         lbl.pack(side='left', padx=5)
+
+        current_val = self.config.get_section_config(self.name).get(config_key, "")
+        textvar = tk.StringVar(value=current_val)
+        textvar.trace_add("write", lambda *args: self.config.update_section_config(self.name, config_key, textvar.get()))
+
+        tk.Button(frame1, text="Select...", anchor='e', command=lambda:self._select_input(parent, textvar), background=bgColor, foreground=normalTextColor
+                  ).pack(side='right', padx=2)
         
+        frame2 = tk.Frame(topFrame, bg=bgColor)
+        frame2.pack(fill='x', expand=True, anchor='s', padx=(5.0,2.0))
+        tk.Entry(frame2, textvariable=textvar, state='readonly',background=bgColor, foreground=normalTextColor,readonlybackground=bgColor
+                 ).pack(fill='x', side='left', expand=True, padx=0)
+    
+    def _select_input(self, parent: Misc, textVar:tk.StringVar):    
+        path = filedialog.askdirectory(parent=parent, title="Select Input Directory")
+        textVar.set(path)

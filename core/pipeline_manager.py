@@ -118,7 +118,7 @@ class PipelineManager:
     def get_category_of_section(self, section: PipelineSection) -> Optional[PipelineCategory]:
          return self._find_category_for_section(section)
 
-    def run_sequence(self):
+    def run_sequence(self, settings:dict):
         """Runs the STAGED steps."""
         if not self.staged_sections:
              self.executor.output_queue.put("[Manager Error]: No steps staged!\n")
@@ -138,7 +138,7 @@ class PipelineManager:
 
         self.current_step_index = 0
         self.is_sequence_running = True
-        self._run_next_in_sequence()
+        self._run_next_in_sequence(settings)
 
     def _validate_order(self) -> bool:
         """Checks if stage indices strictly increase."""
@@ -178,7 +178,7 @@ class PipelineManager:
                 
         return True
 
-    def _run_next_in_sequence(self):
+    def _run_next_in_sequence(self, settings:dict):
         if not self.is_sequence_running:
             return
 
@@ -228,16 +228,16 @@ class PipelineManager:
         self.executor.output_queue.put(f"   -> Input: {current_input}\n")
         self.executor.output_queue.put(f"   -> Output: {current_output}\n")
 
-        cmd = section.build_command()
+        cmd = section.build_command(settings)
         self._notify_status(self.current_step_index, "Running")
         
-        self.executor.run_command(cmd, lambda rc: self._on_sequence_step_finished(rc))
+        self.executor.run_command(cmd, lambda rc: self._on_sequence_step_finished(rc, settings))
 
-    def _on_sequence_step_finished(self, return_code: int):
+    def _on_sequence_step_finished(self, return_code: int, settings:dict):
         if return_code == 0:
             self._notify_status(self.current_step_index, "Completed")
             self.current_step_index += 1
-            self._run_next_in_sequence()
+            self._run_next_in_sequence(settings)
         else:
             self._notify_status(self.current_step_index, "Failed")
             self.executor.output_queue.put("[Manager Error]: Aborted due to failed step\n")

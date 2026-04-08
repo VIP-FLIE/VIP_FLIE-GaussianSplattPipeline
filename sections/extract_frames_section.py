@@ -21,7 +21,7 @@ class ExtractFramesSection(PipelineSection):
         self._add_int_spinbox(parent, "Extract Every Nth Frame", "every_n", 1, 1000, 1, 1)
         self._add_checkbox(parent, "Dry Run (Simulate)", "dry_run", default_val=False)
 
-    def build_command(self) -> List[str]:
+    def build_command(self, settings: dict) -> List[str]:
         # Delegate command building to the specialized builder
         from core.command_builders import ExtractFramesCommandBuilder
         return ExtractFramesCommandBuilder.build(self.config.get_section_config(self.name))
