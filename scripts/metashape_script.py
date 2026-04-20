@@ -6,6 +6,7 @@ Instead, call a subprocess with the string '"path\\to\\your\\metashape.exe" -r "
 """
 
 import os
+from pathlib import *
 import Metashape # type: ignore
 import argparse
 
@@ -20,53 +21,59 @@ class MetashapeProject:
     
 
     def project_execute(self) -> None:
-        doc = self.create_new_project()
-        chunk = self.get_chunk(doc) # type: ignore
-        self.save_project(doc, self.metashape_dir, self.project_name) # type: ignore
-        self.add_photos_to_chunk(chunk, self.images) # type: ignore
-        self.save_project(doc)
-        self.align_photos(chunk) # type: ignore
-        self.save_project(doc)
-        self.export_cameras_to_colmap(chunk, export_path, self.project_name) # type: ignore
+        self.doc = Metashape.Document()
+        self.doc.save(self.metashape_dir+"\\"+self.project_name+".psx")
+        self.chunk = self.doc.addChunk()
+        self.chunk.label = self.project_name + "_Chunk"
+        self.chunk.addPhotos(self.images)
+        self.doc.save()
+        self.align_photos()
+        self.doc.save()
+        self.export_cameras_to_colmap()
         photocount = len(self.images)
-        self.display_metrics(chunk, photocount, self.metashape_dir, self.project_name) # type: ignore
-        self.save_project(doc)
-        Metashape.app.quit()
-        
-    def create_new_project(self) -> Metashape.app.document:
-        doc = Metashape.app.document
-        return doc
+        self.display_metrics(photocount)
+        self.doc.save()
 
-    def get_chunk(self, doc:Metashape.app.document) -> Metashape.Chunk:
-        chunk = doc.chunk
-        return chunk
+    def align_photos(self) -> None:
+        self.chunk.matchPhotos(downscale=1, generic_preselection=True, reference_preselection=False)
+        self.chunk.alignCameras()
 
-    def add_photos_to_chunk(self, chunk:Metashape.Chunk, photo_paths:list[str]) -> None:
-        chunk.addPhotos(photo_paths)
+    def export_cameras_to_colmap(self) -> None:
+        export_path = f"{self.export_path}/{self.project_name}_COLMAP.txt"
+        self.chunk.exportCameras(export_path, format=Metashape.CamerasFormatColmap)
 
-    def align_photos(self, chunk:Metashape.Chunk) -> None:
-        chunk.matchPhotos(downscale=1, generic_preselection=True, reference_preselection=False)
-        chunk.alignCameras()
-
-    def export_cameras_to_colmap(self, chunk:Metashape.Chunk, path:str, filename:str) -> None:
-        export_path = f"{path}/{filename}_COLMAP.txt"
-        chunk.exportCameras(export_path, format=Metashape.CamerasFormatColmap)
-
-    def save_project(doc: Metashape.app.document, path:str=None, filename:str=None) -> None: # type: ignore
-        if not(path and filename):
-            doc.save()
-        else:
-            doc.save(path+"\\"+filename+".psx")
-
-    def display_metrics(self, chunk:Metashape.app.document.chunk, photocount, metashape_dir:str, project_name:str) -> None:
+    def display_metrics(self, photocount) -> None:
         aligned_count = 0
-        for cam in chunk.cameras:
+        for cam in self.chunk.cameras:
             if cam.transform is not None: # Check if camera has a valid transform matrix
                 aligned_count += 1
-        with open(metashape_dir+"\\"+project_name+'_point&photo_stats.txt', 'w') as file:
+        with open(self.metashape_dir+"\\"+self.project_name+'_point&photo_stats.txt', 'w') as file:
             file.write(f"Photos Alligned: {aligned_count}\\{photocount}\n")
-            file.write(f"Total tie points: {len(chunk.tie_points.points)}")
+            file.write(f"Total tie points: {len(self.chunk.tie_points.points)}")
             file.close()
+        print(f"Photos Alligned: {aligned_count}\\{photocount}\n")
+        print(f"Total tie points: {len(self.chunk.tie_points.points)}")
+
+def recursivefile_search(import_path:str, export_path, name, metashape_directory):
+    photos = []
+    entries = os.listdir(import_path)
+    for entry in entries:
+        entrypath = os.path.abspath(import_path + os.path.sep + entry)
+        if os.path.isdir(entrypath): 
+            if export_path == metashape_directory:
+                recursivefile_search(entrypath, export_path+ os.path.sep +os.path.basename(import_path), name, export_path+ os.path.sep +os.path.basename(import_path))
+            else:
+                recursivefile_search(entrypath, export_path+ os.path.sep +os.path.basename(import_path), name+'_'+os.path.basename(import_path), metashape_directory)
+        else:
+            if '.png' == entry[-4:] or '.jpg' == entry[-4]: photos.append(entrypath)
+    if photos:
+        project = MetashapeProject(
+        export_path=export_path,
+        project_name=name,
+        images=photos,
+        metashape_dir=metashape_directory,
+        )
+        project.project_execute()
 
 if __name__ == '__main__':
 # Initialize the parser
@@ -94,18 +101,24 @@ if __name__ == '__main__':
     export_path = args.output
     metashape_directory = args.metashape_output
     name = args.name
-    entries = os.listdir(import_path)
-    # Keep only files, not directories
-    photos = []
-
-    for file in entries:
-        photos.append(str(import_path) + '\\' + str(file))
-
-    project = MetashapeProject(
-        export_path=export_path,
-        project_name=name,
-        images=photos,
-        metashape_dir=metashape_directory,
-    )
     
-    project.project_execute(export_path, name, photos, metashape_directory) # type: ignore
+    recursivefile_search(import_path, export_path, name, metashape_directory)
+    
+    #entries = os.listdir(import_path)
+    # # Keep only files, not directories
+    # photos = []
+    
+    # for entry in entries:
+    #     if os.path.isfile(entry):
+    #     photos.append(str(import_path) + '\\' + str(file))
+
+    # project = MetashapeProject(
+    #     export_path=export_path,
+    #     project_name=name,
+    #     images=photos,
+    #     metashape_dir=metashape_directory,
+    # )
+    
+    # project.project_execute() # type: ignore
+
+

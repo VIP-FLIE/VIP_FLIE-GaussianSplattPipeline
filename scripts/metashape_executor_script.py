@@ -33,7 +33,7 @@ if __name__ == '__main__':
     script_path = str(os.path.join(base_dir, "scripts", "metashape_script.py"))
 
 
-    #TEMP:Using to test the output without access to metashape
+    
     command = f'"{args.executable}" -r "{script_path}" -i "{args.input}" -o "{args.output}" -m "{args.metashape_output}" -n "{args.name}"'
     process = subprocess.Popen(
                 command,

@@ -211,7 +211,7 @@ class PipelineManager:
             # Intermediate output
             # We'll create a folder named after the section inside the global output/intermediate
             # You might want a timestamp or run ID to avoid collisions, but for now simple structure:
-            current_output = os.path.join(self.config.global_context.output_dir, "intermediate" , "intermediate #" + str(self.current_step_index) + " " + section.name)
+            current_output = os.path.join(self.config.global_context.output_dir, "intermediate" , "#" + str(self.current_step_index + 1) + " " + section.name)
             
         # Ensure output directory exists (especially intermediate ones)
         if current_output and not os.path.exists(current_output):

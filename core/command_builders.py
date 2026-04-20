@@ -173,19 +173,19 @@ class MetashapeCommandBuilder:
         cmd.extend(["--executable", settings["settings"]["metashape"]["path"]])
 
         if "input_dir" in config:
-            cmd.extend(["--input", '"'+str(config["input_dir"])+'"'])
+            cmd.extend(["--input", str(config["input_dir"])])
             
         if "output_dir" in config:
-            cmd.extend(["--output", '"'+str(config["output_dir"])+'"'])
+            cmd.extend(["--output", str(config["output_dir"])])
         
         # Mandatory Arguments (Configs defined in Metashape section)
         if "metashape_name" in config:
-            cmd.extend(["--name", '"'+str(config["metashape_name"])+'"'])
+            cmd.extend(["--name", str(config["metashape_name"])])
 
         if ("metashape_output" in config) and (config["separateDirFlag"]):
-            cmd.extend(["--metashape_output", '"'+str(config["metashape_output"])+'"'])        
+            cmd.extend(["--metashape_output", (config["metashape_output"])])        
         else:
-            cmd.extend(["--metashape_output", '"'+str(config["output_dir"]) +'"'])
+            cmd.extend(["--metashape_output", (config["output_dir"])])
         print(cmd)
         return cmd
     
