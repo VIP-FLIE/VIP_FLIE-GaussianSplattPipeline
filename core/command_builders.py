@@ -1,3 +1,15 @@
+"""
+    Command Builders are used to take in the inputs from the gui and synthesize them into command line
+arguments to be run by the executor. 
+
+    In other words, the command builder takes the settings that you input into the GUI and translates them 
+into commands that the computer can run. 
+    
+    This is currently where you define custom command builders, but future plans include
+adding a new class that will allow you to register custom command_builders when creating a 
+script section
+"""
+
 from pathlib import Path
 import sys
 import os

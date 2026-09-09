@@ -1,23 +1,15 @@
 # Environments
 .venv/
-__pycache__/
-*.pyc
-
-# Configuration
-config.json
+.vscode/
 .env
 
-# OS specific
-.DS_Store
-._*
+# Python Cashed Files
+*/__pycache__
+target/
 
-# Scripts
-colmap/
-FastGS/
-fastmap/
-GaussianSplatt/
-GLOMap/
-LiMP/
-mpsfm/
-IndoorTraj/
-/.vscode
+# Settings Files
+*.json
+
+# Old Code
+*.old
+*_old/

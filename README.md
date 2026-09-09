@@ -40,3 +40,8 @@ Execute the main script to start the GUI:
 ```bash
 python main.py
 ```
+
+## Adding your own scripts:
+One of the main goals of this project is to give it the flexibility to run other people's scripts. While possible, this currently takes a tremendous amount of effort because the code's largely undocumented. If you still want to try adding your own scripts, you can look at the documentation that does exist [here](/documentation/full_documentation.md#full-documentation). 
+
+Future work hopes to create a plugin .json structure that would allow for fully custom scripts to be added, but that has yet to be added

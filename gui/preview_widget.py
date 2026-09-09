@@ -40,7 +40,7 @@ class PreviewWidget(tk.Frame):
         has_warning = False
         
         for idx, section in enumerate(self.manager.staged_sections):
-            cat = self.manager.get_category_of_section(section)
+            cat = self.manager._find_category_for_section(section)
             cat_name = cat.name if cat else "?"
             
             # Simple Display

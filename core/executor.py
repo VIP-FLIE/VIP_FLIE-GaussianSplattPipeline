@@ -1,3 +1,9 @@
+"""
+    The executor takes in the commands passed by the pipeline manager, asyncronously executes them, 
+and captures their stderr, stdout output. In other words, the executor is the script that actualy 
+runs all the other scripts
+
+"""
 import io
 import subprocess
 import threading
@@ -6,8 +12,10 @@ import sys
 from typing import List, Callable, Optional
 
 class AsyncExecutor:
-    """
-    Handles execution of shell commands in a background thread.
+    """Handles execution of shell commands in a background thread.
+    
+    The AsyncEcecutor is the main execution class for the backend. The
+    class takes in a queue for the stderr and stdout pipes and 
     Pipes stdout/stderr to a queue for the GUI to consume.
     """
     def __init__(self, output_queue: queue.Queue):
@@ -20,7 +28,7 @@ class AsyncExecutor:
                     command: List[str], 
                     finished_callback: Optional[Callable[[int], None]] = None):
         """
-        Starts a command in a separate thread.
+        Starts the secondary application in a separate thread.
         args:
             command: List of command arguments (e.g., ['python', 'script.py', '--arg'])
             finished_callback: Function to call when process ends (receives return_code)
@@ -50,6 +58,12 @@ class AsyncExecutor:
                 self.output_queue.put(f"[System]: Error terminating: {e}\n")
 
     def _worker(self, command: List[str], finished_callback: Optional[Callable[[int], None]]):
+        """
+            Called by run_command in a separate thread. Used to open a 
+            subprocess and then scans the output to detect failures and 
+            and stops the program if the E-Stop is pressed. It is not meant to 
+            be called directly.
+        """
         try:
             self.output_queue.put(f"[System]: Starting command: {' '.join(command)}\n")
             
@@ -74,6 +88,7 @@ class AsyncExecutor:
             return_code = self.process.wait()
             
             self.is_running = False
+            
             self.output_queue.put(f"[System]: Process finished with return code {return_code}\n")
             
             if finished_callback:

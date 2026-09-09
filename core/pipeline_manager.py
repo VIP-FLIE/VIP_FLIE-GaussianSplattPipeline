@@ -115,9 +115,6 @@ class PipelineManager:
                 return cat
         return None
 
-    def get_category_of_section(self, section: PipelineSection) -> Optional[PipelineCategory]:
-         return self._find_category_for_section(section)
-
     def run_sequence(self, settings:dict):
         """Runs the STAGED steps."""
         if not self.staged_sections:
