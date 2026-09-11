@@ -84,14 +84,17 @@ class PipelineManager:
         """
         new_index = direction + index
         section = self.staged_sections[index]
-        compared_section = self.staged_sections[new_index]
-        cat = self._find_category_for_section(section)
-        compared_cat = self._find_category_for_section(compared_section)
+        try:
+            compared_section = self.staged_sections[new_index]
+            cat = self._find_category_for_section(section)
+            compared_cat = self._find_category_for_section(compared_section)
+
+            if cat == compared_cat:
+                return True
+            
+            return False
         
-        if cat == compared_cat:
-            return True
-        
-        return False
+        except: return False
 
     def move_staged_item(self, index: int, direction: int) -> bool:
         """
@@ -158,19 +161,19 @@ class PipelineManager:
         
         # 1. Input Check
         if not os.path.exists(g_ctx.input_dir):
-            self.executor.output_queue.put(f"[Manager Error]: Global Input Directory does not exist: {g_ctx.input_dir}\n")
+            self.executor.output_queue.put(f"[Manager Error]: Global Input Directory does not exist: {g_ctx.input_dir}")
             return False
             
         # 2. Output Check (Basic)
         # If it exists, check writable. If not, check parent writable.
         if os.path.exists(g_ctx.output_dir):
             if not os.access(g_ctx.output_dir, os.W_OK):
-                self.executor.output_queue.put(f"[Manager Error]: Global Output Directory is not writable: {g_ctx.output_dir}\n")
+                self.executor.output_queue.put(f"[Manager Error]: Global Output Directory is not writable: {g_ctx.output_dir}")
                 return False
         else:
             parent = os.path.dirname(g_ctx.output_dir)
             if parent and os.path.exists(parent) and not os.access(parent, os.W_OK):
-                self.executor.output_queue.put(f"[Manager Error]: Cannot create Output Directory (Parent not writable): {parent}\n")
+                self.executor.output_queue.put(f"[Manager Error]: Cannot create Output Directory (Parent not writable): {parent}")
                 return False
                 
         return True
@@ -180,15 +183,15 @@ class PipelineManager:
             return
 
         if self.current_step_index >= len(self.staged_sections):
-            self.executor.output_queue.put("[Manager]: Sequence Complete.\n")
+            self.executor.output_queue.put("[Manager]: Sequence Complete.")
             self.is_sequence_running = False
             return
 
         section = self.staged_sections[self.current_step_index]
-        self.executor.output_queue.put(f"\n[Manager]: Starting Step {self.current_step_index+1}: {section.name}\n")
+        self.executor.output_queue.put(f"[Manager]: Starting Step {self.current_step_index+1}: {section.name}")
         
         if not section.validate():
-            self.executor.output_queue.put(f"[Manager]: Step '{section.name}' validation failed.\n")
+            self.executor.output_queue.put(f"[Manager]: Step '{section.name}' validation failed.")
             self.is_sequence_running = False
             self._notify_status(self.current_step_index, "Error")
             return
@@ -215,15 +218,15 @@ class PipelineManager:
              try:
                  os.makedirs(current_output, exist_ok=True)
              except OSError as e:
-                 self.executor.output_queue.put(f"[Manager]: Failed to create output dir {current_output}: {e}\n")
+                 self.executor.output_queue.put(f"[Manager]: Failed to create output dir {current_output}: {e}")
                  # We continue, let the script complain if it fails
 
         # Apply paths to section
         section.set_paths(current_input, current_output)
         
         # Log for verification
-        self.executor.output_queue.put(f"   -> Input: {current_input}\n")
-        self.executor.output_queue.put(f"   -> Output: {current_output}\n")
+        self.executor.output_queue.put(f"   -> Input: {current_input}")
+        self.executor.output_queue.put(f"   -> Output: {current_output}")
 
         cmd = section.build_command(settings)
         self._notify_status(self.current_step_index, "Running")
@@ -237,7 +240,7 @@ class PipelineManager:
             self._run_next_in_sequence(settings)
         else:
             self._notify_status(self.current_step_index, "Failed")
-            self.executor.output_queue.put("[Manager Error]: Aborted due to failed step\n")
+            self.executor.output_queue.put("[Manager Error]: Aborted due to failed step")
             self.is_sequence_running = False
 
     def _notify_status(self, index: int, status: str):

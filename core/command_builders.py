@@ -29,7 +29,7 @@ class BlurCommandBuilder:
         # base_dir is now the project root
         script_path = os.path.join(base_dir, "scripts", "blur_filter.py")
         
-        cmd = [ sys.executable, script_path]
+        cmd = [ sys.executable, '-u', script_path]
         
         # injected paths
         if "input_dir" in config:
@@ -88,7 +88,7 @@ class DeduplicateCommandBuilder:
         # base_dir is project root
         script_path = os.path.join(base_dir, "scripts", "deduplicate.py")
         
-        cmd = [sys.executable, script_path]
+        cmd = [sys.executable, '-u', script_path]
         
         # Injected paths
         # Deduplicate script mainly needs input_dir. 
@@ -139,7 +139,7 @@ class ExtractFramesCommandBuilder:
         # base_dir is project root
         script_path = os.path.join(base_dir, "scripts", "extract_frames.py")
         
-        cmd = [ sys.executable, script_path]
+        cmd = [ sys.executable, '-u' , script_path]
         
         # Mandatory Arguments
         if "input_dir" in config:
@@ -178,7 +178,7 @@ class MetashapeCommandBuilder:
         # base_dir is project root
         script_path = os.path.join(base_dir, "scripts", "metashape_executor_script.py")
         
-        cmd = [sys.executable, script_path]
+        cmd = [sys.executable, '-u', script_path]
         
         # Mandatory Arguments (configs not defined in section)
         
@@ -233,5 +233,23 @@ class BrushCommandBuilder:
             cmd.extend([str(Path(config["input_dir"]).absolute())])
 
         print(cmd)
+
+        return cmd
+    
+class Newline_Test:
+    @staticmethod
+    def build(config: Dict[str, Any]) -> List[str]:
+        """
+        Builds the command line arguments for the Blur Filter script.
+        """
+        # Resolve script path relative to this file
+        # This file is in core/
+        # Scripts are in scripts/
+        # Path: ../scripts/blur_filter.py
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # base_dir is now the project root
+        script_path = os.path.join(base_dir, "scripts", "newline_test.py")
+        
+        cmd = [ sys.executable, '-u' , script_path]
 
         return cmd

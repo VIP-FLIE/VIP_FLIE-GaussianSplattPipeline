@@ -3,6 +3,7 @@ from tkinter import ttk
 import queue
 import sys
 import os
+import argparse
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
@@ -13,6 +14,7 @@ from core.pipeline_manager import PipelineManager
 from core.category import PipelineCategory, SelectionMode
 from gui.app_window import AppWindow
 from gui.style import bgColor
+from sections.newline_test import Newline_Test
 
 # Sections
 from sections.example_section import ExampleSection
@@ -22,7 +24,7 @@ from sections.deduplicate_section import DeduplicateSection
 from sections.metashape_section import MetashapeSection
 from sections.brush_section import BrushSection
 
-def main():
+def main(debug:bool=False):
     output_queue = queue.Queue()
     config = PipelineConfiguration()
     executor = AsyncExecutor(output_queue)
@@ -56,6 +58,15 @@ def main():
     cat_train.add_section(BrushSection("Brush", config))
     manager.add_category(cat_train)
     
+    # 5. Debugs
+    if (debug):
+        cat_debug = PipelineCategory("Testing", SelectionMode.SINGLE, stage_index=5)
+        cat_debug.add_section(Newline_Test("Newline Test", config))
+        manager.add_category(cat_debug)
+        print("Debug Mode Enabled")
+        
+        
+    
     # --- Launch ---
     app = AppWindow(manager, executor, output_queue)
     app.configure(bg=bgColor)
@@ -67,4 +78,14 @@ def main():
     app.mainloop()
 
 if __name__ == "__main__":
-    main()
+    
+    parser = argparse.ArgumentParser(description="Gausian Splatting Pipeline Script")
+    parser.add_argument('-d','--debug', required=False, help="Debug flag for implementing debug features")
+    
+    args = parser.parse_args()
+    
+    if args.debug:
+        main(True)
+    else :
+        main()
+    
