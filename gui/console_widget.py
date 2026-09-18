@@ -28,10 +28,6 @@ class ConsoleWidget(tk.Frame):
         self.text_area.tag_config("Manager", foreground=consoleNormal)
 
         self.text_area.pack(fill='both', expand=True)
-        self.text_area.config(state="normal")
-        self.text_area.delete("1.0", "end")
-        self.text_area.see(tk.END)
-        self.text_area.config(state="disabled")
 
         # Start Polling
         self.after(self.poll_interval_ms, self._poll_queue)
