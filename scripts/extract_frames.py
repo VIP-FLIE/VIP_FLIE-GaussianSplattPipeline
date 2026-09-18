@@ -128,7 +128,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Video Frame Extraction Script")
     parser.add_argument("--input_dir", required=True, help="Path to video file OR directory containing videos")
     parser.add_argument("--output_dir", required=True, help="Directory to save extracted frames")
-    parser.add_argument("--format", type=str, default="jpg", help="Output image format (jpg, png, bmp, etc.)")
+    parser.add_argument("--format", type=str, default="png", help="Output image format (jpg, png, bmp, etc.)")
     parser.add_argument("--every_n", type=int, default=1, help="Extract every Nth frame (default: 1)")
     parser.add_argument("--dry_run", action="store_true", help="Simulate without writing files")
     

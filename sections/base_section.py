@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
 import tkinter as tk
+from tkinter import Misc, filedialog
 from typing import List, Any, Dict, Optional
 from core.state_models import PipelineConfiguration
+from gui.style import bgColor, normalTextColor
 
 class PipelineSection(ABC):
     """
     Abstract Base Class for a single step in the pipeline.
     Enforces the interface for Rendering Options and Building Commands.
     """
-    def __init__(self, name: str, config: PipelineConfiguration):
+    def __init__(self, name: str, config: PipelineConfiguration, settings_key: None | str = None):
         self.name = name
         self.config = config
-        
+        self.settings_key = settings_key
         # Internal storage for widgets so we can read them later
         # Key = Config Key, Value = Tkinter Variable (StringVar, IntVar, etc.)
         self.widget_vars: Dict[str, tk.Variable] = {}
@@ -30,6 +32,7 @@ class PipelineSection(ABC):
 
     def set_paths(self, input_path: str, output_path: str):
         """Called by PipelineManager to inject chained paths."""
+        """TODO: Look into the above"""
         self.input_path = input_path
         self.output_path = output_path
         
@@ -39,7 +42,7 @@ class PipelineSection(ABC):
         self.config.update_section_config(self.name, "output_dir", output_path)
 
     @abstractmethod
-    def build_command(self) -> List[str]:
+    def build_command(self, settings: dict) -> List[str]:
         """
         Constructs the strict command line arguments string list.
         e.g., ['python', 'script.py', '--input', '...']
@@ -59,13 +62,23 @@ class PipelineSection(ABC):
         pass
 
     # --- Helper methods for Widgets ---
+    def _add_subtitle(self, parent: tk.Frame, text: str = "This is a dummy title", background = bgColor, textcolor = normalTextColor, padyVar=5):
+        
+        tk.Label(parent, text=text, fg=textcolor, background=background).pack(pady=padyVar)
+    
     
     def _add_entry(self, parent: tk.Frame, label_text: str, config_key: str, default_val: str = ""):
-        """Helper to create a Label + Entry row."""
-        frame = tk.Frame(parent)
+        """
+        Helper to create a Label + Entry row.
+        Example:
+                         ┌────────────┐
+        Number of frames │             │
+                         └────────────┘
+        """
+        frame = tk.Frame(parent, background=bgColor)
         frame.pack(fill='x', pady=2)
         
-        lbl = tk.Label(frame, text=label_text, width=20, anchor='e')
+        lbl = tk.Label(frame, text=label_text, width=20, anchor='w', bg=bgColor, fg=normalTextColor)
         lbl.pack(side='left', padx=5)
         
         # Load current value from config or default
@@ -77,13 +90,22 @@ class PipelineSection(ABC):
         # Trace changes to update config immediately
         var.trace_add("write", lambda *args: self.config.update_section_config(self.name, config_key, var.get()))
         
-        entry = tk.Entry(frame, textvariable=var)
-        entry.pack(side='left', fill='x', expand=True, padx=5)
+        entry = tk.Entry(frame, textvariable=var, bg=bgColor, fg=normalTextColor)
+        entry.pack(side='right', fill='x', expand=False, padx=5)
 
     def _add_checkbox(self, parent: tk.Frame, label_text: str, config_key: str, default_val: bool = False):
-        """Helper to create a Checkbox."""
-        frame = tk.Frame(parent)
+        """
+        Helper to create a Checkbox.
+        Example:
+        
+        Enable Spherical frames ☑
+        
+        """
+        frame = tk.Frame(parent, bg=bgColor)
         frame.pack(fill='x', pady=2)
+        
+        lbl = tk.Label(frame, text=label_text, anchor='w', bg=bgColor, fg=normalTextColor)
+        lbl.pack(side='left', padx=5)
         
         current_val = self.config.get_section_config(self.name).get(config_key, default_val)
         var = tk.BooleanVar(value=current_val)
@@ -91,15 +113,25 @@ class PipelineSection(ABC):
         
         var.trace_add("write", lambda *args: self.config.update_section_config(self.name, config_key, var.get()))
         
-        chk = tk.Checkbutton(frame, text=label_text, variable=var)
-        chk.pack(side='left', padx=25) # Offset to align somewhat with entries
+        chk = tk.Checkbutton(frame, variable=var, bg=bgColor, fg=normalTextColor,justify="center",activebackground=bgColor, activeforeground=normalTextColor, selectcolor=bgColor)
+        chk.pack(side='right') # Offset to align somewhat with entries
 
-    def _add_dropdown(self, parent: tk.Frame, label_text: str, config_key: str, options: List[str], default_val: str, width: int = None):
-        """Helper to create a Dropdown (OptionMenu)."""
-        frame = tk.Frame(parent)
+    def _add_dropdown(self, parent: tk.Frame, label_text: str, config_key: str, options: List[str], default_val: str, width: int | None = 10):
+        """
+        Helper to create a Dropdown (OptionMenu).
+        Example:
+        
+        Choose file type ┌────────────┐
+                         │     PNG     │
+                         │────────────│
+                         │     Jpeg    │
+                         └────────────┘
+        
+        """
+        frame = tk.Frame(parent, background=bgColor)
         frame.pack(fill='x', pady=2)
         
-        lbl = tk.Label(frame, text=label_text, width=20, anchor='e')
+        lbl = tk.Label(frame, text=label_text, anchor='w', bg=bgColor, fg=normalTextColor)
         lbl.pack(side='left', padx=5)
         
         current_val = self.config.get_section_config(self.name).get(config_key, default_val)
@@ -114,18 +146,26 @@ class PipelineSection(ABC):
         menu = tk.OptionMenu(frame, var, *options)
         
         if width:
-            menu.config(width=width)
-            menu.pack(side='left', padx=5)
+            menu.config(width=width, bg=bgColor, fg=normalTextColor, highlightbackground=bgColor, highlightcolor=bgColor)
+            menu.pack(side='right', padx=5)
         else:
-            menu.pack(side='left', fill='x', expand=True, padx=5)
+            menu.pack(side='right', fill='x', expand=False, padx=5)
 
     def _add_float_spinbox(self, parent: tk.Frame, label_text: str, config_key: str, 
                            min_val: float, max_val: float, step: float, default_val: float):
-        """Helper to create a Float Spinbox (up/down arrows)."""
-        frame = tk.Frame(parent)
+        """
+        Helper to create a Float Spinbox (up/down arrows).
+        Example:
+                         ┌────────────┐
+                         │           ▲ │        
+        Number of seconds│    10.00    │
+                         │           ▼ │
+                         └────────────┘     
+        """
+        frame = tk.Frame(parent, bg=bgColor)
         frame.pack(fill='x', pady=2)
         
-        lbl = tk.Label(frame, text=label_text, width=20, anchor='e')
+        lbl = tk.Label(frame, text=label_text, width=20, anchor='w', bg=bgColor, fg=normalTextColor)
         lbl.pack(side='left', padx=5)
         
         current_val = self.config.get_section_config(self.name).get(config_key, default_val)
@@ -143,16 +183,25 @@ class PipelineSection(ABC):
         
         # width=10 is approx half of a typical entry that expands
         sb = tk.Spinbox(frame, from_=min_val, to=max_val, increment=step,
-                        textvariable=var, format="%.2f", width=10)
-        sb.pack(side='left', padx=5)  # No expand=True, so it stays small
+                        textvariable=var, format="%.2f", width=10, bg=bgColor,
+                        fg=normalTextColor, buttonbackground=bgColor)
+        sb.pack(side='right', padx=5)  # No expand=True, so it stays small
 
     def _add_int_spinbox(self, parent: tk.Frame, label_text: str, config_key: str, 
                          min_val: int, max_val: int, step: int, default_val: int):
-        """Helper to create an Integer Spinbox."""
-        frame = tk.Frame(parent)
+        """
+        Helper to create an Integer Spinbox.
+        Example:
+                         ┌────────────┐
+                         │           ▲ │        
+        Number of Frames │    1000     │
+                         │           ▼ │
+                         └────────────┘  
+        """
+        frame = tk.Frame(parent, bg=bgColor)
         frame.pack(fill='x', pady=2)
         
-        lbl = tk.Label(frame, text=label_text, width=20, anchor='e')
+        lbl = tk.Label(frame, text=label_text, width=20, anchor='w', bg=bgColor, fg=normalTextColor)
         lbl.pack(side='left', padx=5)
         
         current_val = self.config.get_section_config(self.name).get(config_key, default_val)
@@ -167,5 +216,40 @@ class PipelineSection(ABC):
         var.trace_add("write", lambda *args: self.config.update_section_config(self.name, config_key, var.get()))
         
         sb = tk.Spinbox(frame, from_=min_val, to=max_val, increment=step,
-                        textvariable=var, width=10)
-        sb.pack(side='left', padx=5)
+                        textvariable=var, bg=bgColor,
+                        fg=normalTextColor, buttonbackground=bgColor)
+        sb.pack(side='right', padx=5)
+
+
+    def _add_folder_selector(self, parent: tk.Frame, label_text: str, config_key: str): 
+        """
+        Helper to create a file selector box.
+        Example:
+                            ┌────────────┐
+        Important file      │Select file │
+                            └────────────┘  
+        """
+        topFrame = tk.Frame(parent, padx=0, pady=0, background=bgColor)
+        topFrame.pack(fill='x', pady=2)
+        
+        frame1 = tk.Frame(topFrame, bg=bgColor)
+        frame1.pack(fill='x', expand=True, anchor='n')
+        
+        lbl = tk.Label(frame1, text=label_text, anchor='w', bg=bgColor, fg=normalTextColor)
+        lbl.pack(side='left', padx=5)
+
+        current_val = self.config.get_section_config(self.name).get(config_key, "")
+        textvar = tk.StringVar(value=current_val)
+        textvar.trace_add("write", lambda *args: self.config.update_section_config(self.name, config_key, textvar.get()))
+
+        tk.Button(frame1, text="Select...", anchor='e', command=lambda:self._select_input(parent, textvar), background=bgColor, foreground=normalTextColor
+                  ).pack(side='right', padx=2)
+        
+        frame2 = tk.Frame(topFrame, bg=bgColor)
+        frame2.pack(fill='x', expand=True, anchor='s', padx=(5.0,2.0))
+        tk.Entry(frame2, textvariable=textvar, state='readonly',background=bgColor, foreground=normalTextColor,readonlybackground=bgColor
+                 ).pack(fill='x', side='left', expand=True, padx=0)
+    
+    def _select_input(self, parent: Misc, textVar:tk.StringVar):    
+        path = filedialog.askdirectory(parent=parent, title="Select Input Directory")
+        textVar.set(path)

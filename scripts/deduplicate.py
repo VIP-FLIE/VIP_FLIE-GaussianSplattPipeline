@@ -74,7 +74,7 @@ class FrameDeduplicator:
         return cv2.resize(img, (self.resize_width, new_h), interpolation=cv2.INTER_AREA)
 
     def _calculate_similarity(self, img_a, img_b):
-        score, _ = ssim(img_a, img_b, full=True, data_range=255)
+        score, _, = ssim(img_a, img_b, full=True, data_range=255) # type: ignore
         return score
 
     def _process_chunk(self, file_chunk):
