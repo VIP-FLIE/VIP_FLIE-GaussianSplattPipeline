@@ -1,3 +1,4 @@
+#TODO: Work on polishing the builders and maybe adding better support for creating them that isnt inside of the core file 
 """
     Command Builders are used to take in the inputs from the gui and synthesize them into command line
 arguments to be run by the executor. 

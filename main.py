@@ -54,7 +54,6 @@ def main(debug:bool=False):
     
     # 4. Training
     cat_train = PipelineCategory("Training", SelectionMode.SINGLE, stage_index=4)
-    #TODO: Implement Brush Support
     cat_train.add_section(BrushSection("Brush", config))
     manager.add_category(cat_train)
     
@@ -64,8 +63,8 @@ def main(debug:bool=False):
         cat_debug.add_section(Newline_Test("Newline Test", config))
         manager.add_category(cat_debug)
         print("Debug Mode Enabled")
-        
-        
+            
+    #TODO: Maybe add a comand line version of the program
     
     # --- Launch ---
     app = AppWindow(manager, executor, output_queue)

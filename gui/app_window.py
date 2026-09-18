@@ -91,7 +91,6 @@ class AppWindow(tk.Tk):
         main_pane.add(self.library_widget, minsize=240, width=250)
         self.library_widget.configure(borderwidth=0)
         
-        
         # 2. Middle: Options
         self.options_container = tk.Frame(main_pane, background=bgColor)
         main_pane.add(self.options_container, minsize=400)
